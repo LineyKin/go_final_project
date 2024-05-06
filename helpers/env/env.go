@@ -1,4 +1,4 @@
-package helpers
+package env
 
 import (
 	"os"
@@ -6,11 +6,12 @@ import (
 	env "github.com/joho/godotenv"
 )
 
-func GetPort() string {
+func GetByKey(key string) string {
 	err := env.Load(".ENV")
+
 	if err != nil {
 		panic("Невозможно загрузить .ENV")
 	}
 
-	return os.Getenv("TODO_PORT")
+	return os.Getenv(key)
 }

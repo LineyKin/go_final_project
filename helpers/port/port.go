@@ -1,16 +1,11 @@
 package port
 
 import (
-	"os"
-
-	env "github.com/joho/godotenv"
+	env "go_final_project/helpers/env"
 )
 
-func GetPort() string {
-	err := env.Load(".ENV")
-	if err != nil {
-		panic("Невозможно загрузить .ENV")
-	}
+const env_key string = "TODO_PORT"
 
-	return os.Getenv("TODO_PORT")
+func Get() string {
+	return env.GetByKey(env_key)
 }
