@@ -3,21 +3,21 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	p "go_final_project/helpers/port"
 )
 
-func mainHandle(res http.ResponseWriter, req *http.Request) {
-	s := time.Now().Format("02.01.2006 15:04:05")
-	res.Write([]byte(s))
-
-}
-
 func main() {
 	port := p.Get()
 	fmt.Println("Запускаем сервер")
-	http.HandleFunc(`/`, mainHandle)
+
+	// "ручки" основной страницы фронта и файлов фронта
+	webDir := "web"
+	http.Handle(`/`, http.FileServer(http.Dir(webDir)))
+	http.Handle(`/js/scripts.min.js`, http.FileServer(http.Dir(webDir)))
+	http.Handle(`/css/style.css`, http.FileServer(http.Dir(webDir)))
+	http.Handle(`/favicon.ico`, http.FileServer(http.Dir(webDir)))
+
 	fmt.Printf("http://localhost:%s/", port)
 	err := http.ListenAndServe(":"+port, nil)
 	if err != nil {
