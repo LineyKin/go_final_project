@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	p "go_final_project/helpers"
+	p "go_final_project/helpers/port"
 )
 
 func mainHandle(res http.ResponseWriter, req *http.Request) {
@@ -15,7 +15,7 @@ func mainHandle(res http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	port := p.GetPort()
+	port := p.Get()
 	fmt.Println("Запускаем сервер")
 	http.HandleFunc(`/`, mainHandle)
 	fmt.Printf("http://localhost:%s/", port)
