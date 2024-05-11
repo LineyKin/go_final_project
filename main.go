@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
+	db_creator "go_final_project/helpers/db_creator"
 	p "go_final_project/helpers/port"
 )
 
 func main() {
+	db_creator.Create()
 	port := p.Get()
 	fmt.Println("Запускаем сервер")
 
