@@ -10,13 +10,22 @@ import (
 const env_key string = "TODO_DBFILE"
 
 func Create() {
-	dbFile := env.GetByKey(env_key)
-	_, err := os.Stat("./" + dbFile)
+	dbFileName := env.GetByKey(env_key)
+	dbPath := "./" + dbFileName
+
+	// проверяем, есть ли файл БД
+	_, err := os.Stat(dbPath)
 	if err != nil {
-		// создаём БД scheduler.db
-		fmt.Println(err)
+		createDbFile(dbPath) // создаём файл БД
 	}
 
 	// создаём таблицу scheduler
 
+}
+
+func createDbFile(dbPath string) {
+	_, err := os.Create(dbPath)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
