@@ -6,17 +6,21 @@ import (
 	"time"
 
 	//dbCreator "go_final_project/helpers/db_creator"
-	nextDate "go_final_project/helpers/next_date"
+	nd "go_final_project/helpers/next_date"
 	p "go_final_project/helpers/port"
 )
 
 func main() {
 
 	now := time.Now()
-	date := "20240513"
-	repeatRule := "d 400"
+	date := "20230227"
+	repeatRule := "y"
 
-	nextDate.Get(now, date, repeatRule)
+	nextDate, thisErr := nd.Get(now, date, repeatRule)
+	if thisErr != nil {
+		fmt.Println(thisErr)
+	}
+	fmt.Println(nextDate)
 
 	// проверяем БД и в случае отсутствия создаём её с таблицей
 	//dbCreator.Create()
