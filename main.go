@@ -3,13 +3,24 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
-	db_creator "go_final_project/helpers/db_creator"
+	//dbCreator "go_final_project/helpers/db_creator"
+	nextDate "go_final_project/helpers/next_date"
 	p "go_final_project/helpers/port"
 )
 
 func main() {
-	db_creator.Create()
+
+	now := time.Now()
+	date := "20240513"
+	repeatRule := "d 400"
+
+	nextDate.Get(now, date, repeatRule)
+
+	// проверяем БД и в случае отсутствия создаём её с таблицей
+	//dbCreator.Create()
+
 	port := p.Get()
 	fmt.Println("Запускаем сервер")
 
