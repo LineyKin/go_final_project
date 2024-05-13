@@ -9,7 +9,9 @@ import (
 
 const yearType = "y"
 const dayType = "d"
-const dateFormat = "20060102"
+
+// const weekType = "w"
+const DateFormat = "20060102"
 
 func Get(now time.Time, date string, repeat string) (string, error) {
 
@@ -33,7 +35,7 @@ func Get(now time.Time, date string, repeat string) (string, error) {
 }
 
 func calcDayType(now time.Time, dateStr string, repeat string) (string, error) {
-	date, err := time.Parse(dateFormat, dateStr)
+	date, err := time.Parse(DateFormat, dateStr)
 
 	if err != nil {
 		return "", err
@@ -54,12 +56,12 @@ func calcDayType(now time.Time, dateStr string, repeat string) (string, error) {
 
 	fmt.Println(dateStr)
 
-	return newDate.Format(dateFormat), nil
+	return newDate.Format(DateFormat), nil
 }
 
 func calcYearType(now time.Time, dateStr string) (string, error) {
 
-	date, err := time.Parse(dateFormat, dateStr)
+	date, err := time.Parse(DateFormat, dateStr)
 
 	if err != nil {
 		return "", err
@@ -71,5 +73,5 @@ func calcYearType(now time.Time, dateStr string) (string, error) {
 		newDate = newDate.AddDate(1, 0, 0)
 	}
 
-	return newDate.Format(dateFormat), nil
+	return newDate.Format(DateFormat), nil
 }

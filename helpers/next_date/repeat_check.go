@@ -7,9 +7,9 @@ import (
 
 func checkRepeatFormat(repeat, repeatType string) bool {
 	switch repeatType {
-	case "y":
+	case yearType:
 		return chekYearType(repeat)
-	case "d":
+	case dayType:
 		return checkDayType(repeat)
 	default:
 		return false
