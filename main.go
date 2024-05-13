@@ -14,7 +14,7 @@ func main() {
 
 	now := time.Now()
 	date := "20230227"
-	repeatRule := "y"
+	repeatRule := "d 15"
 
 	nextDate, thisErr := nd.Get(now, date, repeatRule)
 	if thisErr != nil {
