@@ -9,18 +9,18 @@ import (
 
 const yearType = "y"
 const dayType = "d"
+const weekType = "w"
 
 // const weekType = "w"
 const DateFormat = "20060102"
 
 func Get(now time.Time, date string, repeat string) (string, error) {
 
-	repeatTypeList := [2]string{yearType, dayType}
+	repeatTypeList := [3]string{yearType, dayType, weekType}
 	var repeatType string
 	for _, val := range repeatTypeList {
 		if checkRepeatFormat(repeat, val) {
 			repeatType = val
-			fmt.Println(repeatType + " rule")
 		}
 	}
 
@@ -29,6 +29,8 @@ func Get(now time.Time, date string, repeat string) (string, error) {
 		return calcYearType(now, date)
 	case dayType:
 		return calcDayType(now, date, repeat)
+	case weekType:
+		return "week", nil
 	default:
 		return "", fmt.Errorf("переменная repeat недоспустимого формата: '" + repeat + "'")
 	}
