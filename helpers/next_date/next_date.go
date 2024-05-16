@@ -10,8 +10,6 @@ import (
 const yearType = "y"
 const dayType = "d"
 const weekType = "w"
-
-// const weekType = "w"
 const DateFormat = "20060102"
 
 func Get(now time.Time, date string, repeat string) (string, error) {
@@ -30,10 +28,46 @@ func Get(now time.Time, date string, repeat string) (string, error) {
 	case dayType:
 		return calcDayType(now, date, repeat)
 	case weekType:
-		return "week", nil
+		return calcWeekType(now, date, repeat)
 	default:
 		return "", fmt.Errorf("переменная repeat недоспустимого формата: '" + repeat + "'")
 	}
+}
+
+// функция проверяет, подходит ли дата date под какой-нибудь
+// день недели из списка weekDaysList
+func checkWeekDay(date time.Time, weekDaysList []string) bool {
+	weekDayToCheck := date.Weekday()
+	for _, weekDayStr := range weekDaysList {
+		weekDay, err := strconv.Atoi(weekDayStr)
+		if err != nil {
+			continue
+		}
+		if int(weekDayToCheck) == weekDay {
+			return true
+		}
+	}
+
+	return false
+}
+
+func calcWeekType(now time.Time, dateStr string, repeat string) (string, error) {
+	date, err := time.Parse(DateFormat, dateStr)
+
+	if err != nil {
+		return "", err
+	}
+
+	re, _ := regexp.Compile(`\d+`)
+	weekDaysList := re.FindAllString(repeat, -1)
+
+	newDate := date.AddDate(0, 0, 1)
+
+	for newDate.Sub(now) <= 0 || !checkWeekDay(newDate, weekDaysList) {
+		newDate = newDate.AddDate(0, 0, 1)
+	}
+
+	return newDate.Format(DateFormat), nil
 }
 
 func calcDayType(now time.Time, dateStr string, repeat string) (string, error) {

@@ -1,7 +1,6 @@
 package next_date
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
@@ -20,7 +19,6 @@ func checkRepeatFormat(repeat, repeatType string) bool {
 }
 
 func isUnique(arr []string) bool {
-	fmt.Println(arr)
 	valMap := make(map[string]bool)
 
 	for _, day := range arr {
@@ -37,7 +35,6 @@ func checkWeekType(repeat string) bool {
 	repeat = strings.TrimSpace(repeat)
 	repeat = strings.ToLower(repeat)
 
-	fmt.Println(repeat)
 	weekRuleRegExp := `^w{1}\s+[1-7]{1}(,[1-7]){1,6}$`
 
 	matched, err := regexp.MatchString(weekRuleRegExp, repeat)
