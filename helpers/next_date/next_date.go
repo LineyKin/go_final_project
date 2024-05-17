@@ -13,7 +13,7 @@ const weekType = "w"
 const typeCount = 3
 const DateFormat = "20060102"
 
-func Get(now time.Time, date string, repeat string) (string, error) {
+func Calc(now time.Time, date string, repeat string) (string, error) {
 
 	repeatTypeList := [typeCount]string{yearType, dayType, weekType}
 	var repeatType string

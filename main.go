@@ -40,7 +40,7 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 	nextDate := ""
 	if okNow && okDate && okRepeat {
 		nowTime, _ := time.Parse(nd.DateFormat, now[0])
-		nextDate, err = nd.Get(nowTime, date[0], repeat[0])
+		nextDate, err = nd.Calc(nowTime, date[0], repeat[0])
 	}
 
 	if err != nil {
