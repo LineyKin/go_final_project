@@ -10,15 +10,17 @@ import (
 const yearType = "y"
 const dayType = "d"
 const weekType = "w"
+const typeCount = 3
 const DateFormat = "20060102"
 
 func Get(now time.Time, date string, repeat string) (string, error) {
 
-	repeatTypeList := [3]string{yearType, dayType, weekType}
+	repeatTypeList := [typeCount]string{yearType, dayType, weekType}
 	var repeatType string
-	for _, val := range repeatTypeList {
-		if checkRepeatFormat(repeat, val) {
-			repeatType = val
+	for i := 0; i < typeCount; i++ {
+		if checkRepeatFormat(repeat, repeatTypeList[i]) {
+			repeatType = repeatTypeList[i]
+			break
 		}
 	}
 
