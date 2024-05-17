@@ -13,11 +13,19 @@ func checkRepeatFormat(repeat, repeatType string) bool {
 		return checkDayType(repeat)
 	case weekType:
 		return checkWeekType(repeat)
+	case monthType:
+		return checkMonthType(repeat)
 	default:
 		return false
 	}
 }
 
+func checkMonthType(repeat string) bool {
+	return true
+}
+
+// проверяет отсустствие/присутствие повторяющихся элементов в слайсе
+// если каждый элемент уникален - true, иначе false
 func isUnique(arr []string) bool {
 	valMap := make(map[string]bool)
 

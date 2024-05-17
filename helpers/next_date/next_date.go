@@ -10,12 +10,13 @@ import (
 const yearType = "y"
 const dayType = "d"
 const weekType = "w"
-const typeCount = 3
+const monthType = "m"
+const typeCount = 4
 const DateFormat = "20060102"
 
 func Calc(now time.Time, date string, repeat string) (string, error) {
 
-	repeatTypeList := [typeCount]string{yearType, dayType, weekType}
+	repeatTypeList := [typeCount]string{yearType, dayType, weekType, monthType}
 	var repeatType string
 	for i := 0; i < typeCount; i++ {
 		if checkRepeatFormat(repeat, repeatTypeList[i]) {
@@ -31,9 +32,15 @@ func Calc(now time.Time, date string, repeat string) (string, error) {
 		return calcDayType(now, date, repeat)
 	case weekType:
 		return calcWeekType(now, date, repeat)
+	case monthType:
+		return calcMonthType(now, date, repeat)
 	default:
 		return "", fmt.Errorf("переменная repeat недоспустимого формата: '" + repeat + "'")
 	}
+}
+
+func calcMonthType(now time.Time, dateStr string, repeat string) (string, error) {
+	return "month", nil
 }
 
 // функция проверяет, подходит ли дата date под какой-нибудь
