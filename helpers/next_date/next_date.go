@@ -39,10 +39,6 @@ func Calc(now time.Time, date string, repeat string) (string, error) {
 	}
 }
 
-func calcMonthType(now time.Time, dateStr string, repeat string) (string, error) {
-	return "month", nil
-}
-
 // функция проверяет, подходит ли дата date под какой-нибудь
 // день недели из списка weekDaysList
 func checkWeekDay(date time.Time, weekDaysList []string) bool {
