@@ -42,16 +42,36 @@ func convertDays(date time.Time, days []string) []int {
 	return daysInt
 }
 
+// возвращает новую дату выполнения задачи,
+// если в repeat указаны только дни (аргумент days)
 func calcMonthTypeWithDaysOnly(now time.Time, date time.Time, days string) (string, error) {
-	// прибавляем к дате месяц
-	newDate := date.AddDate(0, 1, 0)
-
 	daysList := strings.Split(days, ",")
-	convertedDaysList := convertDays(newDate, daysList)
-	fmt.Println(daysList)
-	fmt.Println(convertedDaysList)
 
-	return "", nil
+	// Бесконечно бегаем по месяцам до тех пор, пока не поймаем нужный.
+	// Начинаем с месяца из date
+	for {
+
+		// Получаем конкретные, упорядоченные по возрастанию, значения дней для каждого миесяца.
+		// Ведь для разных месяцев дни, обозначающиеся
+		// как -1 и -2, это разные дни.
+		convertedDaysList := convertDays(date, daysList)
+
+		// бегаем по дням
+		for i := 0; i < len(convertedDaysList); i++ {
+
+			// собираем потенциальную новую дату выполнения задачи
+			newDate := time.Date(date.Year(), date.Month(), convertedDaysList[i], 0, 0, 0, 0, date.Location())
+
+			// как только дата больше date и now
+			// возвращем её в нужном формате`
+			if newDate.Sub(now) > 0 && newDate.Sub(date) > 0 {
+				return newDate.Format(DateFormat), nil
+			}
+		}
+
+		// если мы пришли сюда, то прибавляем к date месяц и начинаем всё по-новой
+		date = date.AddDate(0, 1, 0)
+	}
 }
 
 func calcMonthType(now time.Time, dateStr string, repeat string) (string, error) {
@@ -66,7 +86,7 @@ func calcMonthType(now time.Time, dateStr string, repeat string) (string, error)
 
 	switch len(repeatParts) {
 	case 2:
-		return calcMonthTypeWithDaysOnly(now, date, repeatParts[1])
+		return calcMonthTypeWithDaysOnly(now, date, repeatParts[1]) // расчёт без опциональной части с месяцами
 	case 3:
 		return "both", nil
 	default:
