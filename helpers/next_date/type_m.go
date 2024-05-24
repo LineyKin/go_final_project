@@ -44,8 +44,9 @@ func convertDays(date time.Time, days []string) []int {
 
 // возвращает новую дату выполнения задачи,
 // если в repeat указаны только дни (аргумент days)
-func calcMonthTypeWithDaysOnly(now time.Time, date time.Time, days string) (string, error) {
+func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error) {
 	daysList := strings.Split(days, ",")
+	currentDate := date
 
 	// Бесконечно бегаем по месяцам до тех пор, пока не поймаем нужный.
 	// Начинаем с месяца из date
@@ -64,7 +65,7 @@ func calcMonthTypeWithDaysOnly(now time.Time, date time.Time, days string) (stri
 
 			// как только дата больше date и now
 			// возвращем её в нужном формате`
-			if newDate.Sub(now) > 0 && newDate.Sub(date) > 0 {
+			if newDate.Sub(now) > 0 && newDate.Sub(currentDate) > 0 {
 				return newDate.Format(DateFormat), nil
 			}
 		}
@@ -74,7 +75,58 @@ func calcMonthTypeWithDaysOnly(now time.Time, date time.Time, days string) (stri
 	}
 }
 
-func calcMonthType(now time.Time, dateStr string, repeat string) (string, error) {
+func convertMonths(months []string) []int {
+	monthsInt := []int{}
+
+	for i := 0; i < len(months); i++ {
+		month, _ := strconv.Atoi(months[i])
+		monthsInt = append(monthsInt, month)
+	}
+
+	sort.Slice(monthsInt, func(i, j int) bool {
+		return monthsInt[i] < monthsInt[j]
+	})
+
+	return monthsInt
+}
+
+func calcMonthTypeWithDaysAndMonths(now, date time.Time, days, months string) (string, error) {
+
+	// получим слайс месяцев в формате int
+	monthsList := convertMonths(strings.Split(months, ","))
+	currentDate := date
+
+	// Бесконечно бегаем по годам до тех пор, пока не поймаем нужный.
+	// Начинаем с года из date
+	// на практике у этого цикла не должно быть больше 2 итераций
+	for {
+		// бегаем по месяцам
+		for i := 0; i < len(monthsList); i++ {
+			//fmt.Println(monthsList[i])
+			// someDate нужна только как аргумент в получении daysList
+			someDate := time.Date(date.Year(), time.Month(monthsList[i]), 1, 0, 0, 0, 0, date.Location())
+			daysList := convertDays(someDate, strings.Split(days, ","))
+
+			// бегаем по дням
+			for j := 0; j < len(daysList); j++ {
+
+				// собираем потенциальную новую дату выполнения задачи
+				newDate := time.Date(date.Year(), time.Month(monthsList[i]), daysList[j], 0, 0, 0, 0, date.Location())
+
+				// как только дата больше date и now
+				// возвращем её в нужном формате`
+				if newDate.Sub(now) > 0 && newDate.Sub(currentDate) > 0 {
+					return newDate.Format(DateFormat), nil
+				}
+			}
+		}
+
+		// если мы пришли сюда, то прибавляем к date год и начинаем всё по-новой
+		date = date.AddDate(1, 0, 0)
+	}
+}
+
+func calcMonthType(now time.Time, dateStr, repeat string) (string, error) {
 	date, err := time.Parse(DateFormat, dateStr)
 
 	if err != nil {
@@ -88,7 +140,7 @@ func calcMonthType(now time.Time, dateStr string, repeat string) (string, error)
 	case 2:
 		return calcMonthTypeWithDaysOnly(now, date, repeatParts[1]) // расчёт без опциональной части с месяцами
 	case 3:
-		return "both", nil
+		return calcMonthTypeWithDaysAndMonths(now, date, repeatParts[1], repeatParts[2]) // расчёт с опциональной частью`
 	default:
 		return "", fmt.Errorf("переменная repeat недоспустимого формата: '" + repeat + "'")
 	}
