@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	dbCreator "go_final_project/helpers/db_creator"
@@ -48,7 +49,8 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := json.Marshal(nextDate)
+	nextDateInt, _ := strconv.Atoi(nextDate)
+	resp, err := json.Marshal(nextDateInt)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

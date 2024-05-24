@@ -60,10 +60,19 @@ func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error)
 		// бегаем по дням
 		for i := 0; i < len(convertedDaysList); i++ {
 
-			// собираем потенциальную новую дату выполнения задачи
-			newDate := time.Date(date.Year(), date.Month(), convertedDaysList[i], 0, 0, 0, 0, date.Location())
+			day := convertedDaysList[i]
 
-			// как только дата больше date и now
+			// если день из правила больше максимального дня рассматриваемом месяце - пропускаем
+			if day > getLastDayOfMonth(date) {
+				continue
+			}
+
+			// собираем потенциальную новую дату выполнения задачи
+			newDate := time.Date(date.Year(), date.Month(), day, 0, 0, 0, 0, date.Location())
+
+			//fmt.Println(newDate)
+
+			// как только дата больше currentDate и now
 			// возвращем её в нужном формате`
 			if newDate.Sub(now) > 0 && newDate.Sub(currentDate) > 0 {
 				return newDate.Format(DateFormat), nil
@@ -102,18 +111,23 @@ func calcMonthTypeWithDaysAndMonths(now, date time.Time, days, months string) (s
 	for {
 		// бегаем по месяцам
 		for i := 0; i < len(monthsList); i++ {
-			//fmt.Println(monthsList[i])
 			// someDate нужна только как аргумент в получении daysList
 			someDate := time.Date(date.Year(), time.Month(monthsList[i]), 1, 0, 0, 0, 0, date.Location())
 			daysList := convertDays(someDate, strings.Split(days, ","))
 
 			// бегаем по дням
 			for j := 0; j < len(daysList); j++ {
+				day := daysList[j]
+
+				// если день из правила больше максимального дня рассматриваемом месяце - пропускаем
+				if day > getLastDayOfMonth(date) {
+					continue
+				}
 
 				// собираем потенциальную новую дату выполнения задачи
-				newDate := time.Date(date.Year(), time.Month(monthsList[i]), daysList[j], 0, 0, 0, 0, date.Location())
+				newDate := time.Date(date.Year(), time.Month(monthsList[i]), day, 0, 0, 0, 0, date.Location())
 
-				// как только дата больше date и now
+				// как только дата больше currentDate и now
 				// возвращем её в нужном формате`
 				if newDate.Sub(now) > 0 && newDate.Sub(currentDate) > 0 {
 					return newDate.Format(DateFormat), nil

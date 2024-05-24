@@ -15,6 +15,12 @@ func checkWeekDay(date time.Time, weekDaysList []string) bool {
 		if err != nil {
 			continue
 		}
+
+		// Go воскресенье понимает как 0, а не как 7
+		if weekDay == 7 {
+			weekDay = 0
+		}
+
 		if int(weekDayToCheck) == weekDay {
 			return true
 		}

@@ -137,7 +137,7 @@ func checkWeekType(repeat string) bool {
 	repeat = strings.TrimSpace(repeat)
 	repeat = strings.ToLower(repeat)
 
-	weekRuleRegExp := `^w{1}\s+[1-7]{1}(,[1-7]){1,6}$`
+	weekRuleRegExp := `^w{1}\s+[1-7]{1}(,[1-7]){0,6}$`
 
 	matched, err := regexp.MatchString(weekRuleRegExp, repeat)
 
