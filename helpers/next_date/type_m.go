@@ -47,6 +47,9 @@ func convertDays(date time.Time, days []string) []int {
 func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error) {
 	daysList := strings.Split(days, ",")
 	currentDate := date
+	//fmt.Println(date)
+	//date = date.AddDate(0, 1, 0)
+	//fmt.Println(date)
 
 	// Бесконечно бегаем по месяцам до тех пор, пока не поймаем нужный.
 	// Начинаем с месяца из date
@@ -56,6 +59,8 @@ func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error)
 		// Ведь для разных месяцев дни, обозначающиеся
 		// как -1 и -2, это разные дни.
 		convertedDaysList := convertDays(date, daysList)
+
+		fmt.Println(daysList)
 
 		// бегаем по дням
 		for i := 0; i < len(convertedDaysList); i++ {
@@ -80,8 +85,30 @@ func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error)
 		}
 
 		// если мы пришли сюда, то прибавляем к date месяц и начинаем всё по-новой
-		date = date.AddDate(0, 1, 0)
+		nextMonth := date.Month() + 1
+		someDateOfNextMonth := time.Date(date.Year(), time.Month(nextMonth), 1, 0, 0, 0, 0, date.Location())
+		lastDayOfNextMonth := getLastDayOfMonth(someDateOfNextMonth)
+
+		// если последний день следующего месяца меньше последнего дня текущего месяца
+		// и при этом в правиле есть символы -1 или -2
+		// то дата следующего месяца = дата последнего дня следующего месяца
+		if lastDayOfNextMonth < date.Day() && isSpecialDaySigns(daysList) {
+			date = time.Date(date.Year(), time.Month(nextMonth), lastDayOfNextMonth, 0, 0, 0, 0, date.Location())
+		} else {
+			date = date.AddDate(0, 1, 0)
+		}
 	}
+}
+
+// проверяет на наличие специальных обозначений дней -1 или -2
+func isSpecialDaySigns(dayList []string) bool {
+	for i := 0; i < len(dayList); i++ {
+		if dayList[i] == "-1" || dayList[i] == "-2" {
+			return true
+		}
+	}
+
+	return false
 }
 
 func convertMonths(months []string) []int {
@@ -154,7 +181,7 @@ func calcMonthType(now time.Time, dateStr, repeat string) (string, error) {
 	case 2:
 		return calcMonthTypeWithDaysOnly(now, date, repeatParts[1]) // расчёт без опциональной части с месяцами
 	case 3:
-		return calcMonthTypeWithDaysAndMonths(now, date, repeatParts[1], repeatParts[2]) // расчёт с опциональной частью`
+		return calcMonthTypeWithDaysAndMonths(now, date, repeatParts[1], repeatParts[2]) // расчёт с опциональной частью
 	default:
 		return "", fmt.Errorf("переменная repeat недоспустимого формата: '" + repeat + "'")
 	}
