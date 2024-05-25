@@ -47,9 +47,6 @@ func convertDays(date time.Time, days []string) []int {
 func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error) {
 	daysList := strings.Split(days, ",")
 	currentDate := date
-	//fmt.Println(date)
-	//date = date.AddDate(0, 1, 0)
-	//fmt.Println(date)
 
 	// Бесконечно бегаем по месяцам до тех пор, пока не поймаем нужный.
 	// Начинаем с месяца из date
@@ -59,8 +56,6 @@ func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error)
 		// Ведь для разных месяцев дни, обозначающиеся
 		// как -1 и -2, это разные дни.
 		convertedDaysList := convertDays(date, daysList)
-
-		fmt.Println(daysList)
 
 		// бегаем по дням
 		for i := 0; i < len(convertedDaysList); i++ {
@@ -74,8 +69,6 @@ func calcMonthTypeWithDaysOnly(now, date time.Time, days string) (string, error)
 
 			// собираем потенциальную новую дату выполнения задачи
 			newDate := time.Date(date.Year(), date.Month(), day, 0, 0, 0, 0, date.Location())
-
-			//fmt.Println(newDate)
 
 			// как только дата больше currentDate и now
 			// возвращем её в нужном формате`
