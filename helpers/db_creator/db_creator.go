@@ -11,6 +11,7 @@ import (
 )
 
 const env_key string = "TODO_DBFILE"
+const driverName string = "sqlite"
 
 func getDbPath() string {
 	dbFileName := env.GetByKey(env_key)
@@ -38,8 +39,12 @@ func createDbFile(dbPath string) {
 	}
 }
 
+func GetConnection() (*sql.DB, error) {
+	return sql.Open(driverName, getDbPath())
+}
+
 func createTable() {
-	db, err := sql.Open("sqlite", getDbPath())
+	db, err := sql.Open(driverName, getDbPath())
 	if err != nil {
 		fmt.Println(err)
 		return

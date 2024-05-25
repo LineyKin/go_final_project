@@ -13,18 +13,12 @@ import (
 	dbCreator "go_final_project/helpers/db_creator"
 	nd "go_final_project/helpers/next_date"
 	p "go_final_project/helpers/port"
+	tsk "go_final_project/models/task"
 
 	"github.com/go-chi/chi/v5"
 )
 
 const webDir = "web"
-
-type Task struct {
-	Date    string `json:"date"`
-	Title   string `json:"title"`
-	Comment string `json:"comment"`
-	Repeat  string `json:"repeat"`
-}
 
 func getNextDate(w http.ResponseWriter, r *http.Request) {
 	urlStr := r.URL.String()
@@ -77,7 +71,7 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 
 // обработчик добавления задачи
 func addTask(w http.ResponseWriter, r *http.Request) {
-	var task Task
+	var task tsk.Task
 	var buf bytes.Buffer
 
 	_, err := buf.ReadFrom(r.Body)
@@ -90,10 +84,10 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	fmt.Println("date - " + task.Date)
-	fmt.Println("Title - " + task.Title)
-	fmt.Println("Comment - " + task.Comment)
-	fmt.Println("Repeat - " + task.Repeat)
+
+	newTaskId, newTaskErr := tsk.Add(task)
+	fmt.Println(newTaskId)
+	fmt.Println(newTaskErr)
 }
 
 func main() {
