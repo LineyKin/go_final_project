@@ -24,6 +24,25 @@ type TaskFromDB struct {
 	Task
 }
 
+func GetById(id string) (TaskFromDB, error) {
+	task := TaskFromDB{}
+	db, err := dbCreator.GetConnection()
+	if err != nil {
+		fmt.Println(err)
+		return task, err
+	}
+	defer db.Close()
+
+	sqlPattern := fmt.Sprintf("SELECT * FROM %s WHERE id = :id", tableName)
+	row := db.QueryRow(sqlPattern, sql.Named("id", id))
+	err = row.Scan(&task.Id, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	if err != nil {
+		return task, err
+	}
+
+	return task, nil
+}
+
 func GetList() ([]TaskFromDB, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {

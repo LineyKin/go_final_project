@@ -69,6 +69,48 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// обработчик получения задачи по её id
+func getTask(w http.ResponseWriter, r *http.Request) {
+
+	urlStr := r.URL.String()
+	urlParsed, err := url.Parse(urlStr)
+	if err != nil {
+		panic(err)
+	}
+
+	params, _ := url.ParseQuery(urlParsed.RawQuery)
+
+	id, ok := params["id"]
+	if !ok {
+		respMap := map[string]string{
+			"error": "нет параметра id",
+		}
+		resp, _ := json.MarshalIndent(respMap, "", "    ")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(resp)
+		return
+	}
+
+	// получаем задачу
+	task, getErr := tsk.GetById(id[0])
+	resp, err := json.MarshalIndent(task, "", "    ")
+	if getErr != nil {
+		respMap := map[string]string{
+			"error": error.Error(getErr),
+		}
+		resp, err = json.MarshalIndent(respMap, "", "    ")
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
 // обработчик получения списка задач
 func getTasks(w http.ResponseWriter, r *http.Request) {
 	list, listError := tsk.GetList()
@@ -145,6 +187,9 @@ func main() {
 
 	// ручка получения списка задач
 	r.Get("/api/tasks", getTasks)
+
+	// ручка получения задачи по её id
+	r.Get("/api/task", getTask)
 
 	// Ручки основной страницы фронта и файлов фронта.
 	// Баг: неадекватно реагирует на ctrl + shift + R,
