@@ -25,6 +25,43 @@ type TaskFromDB struct {
 	Task
 }
 
+func DeleteById(id string) (string, error) {
+	db, err := dbCreator.GetConnection()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	defer db.Close()
+	sqlPattern := "DELETE FROM %s WHERE id = :id"
+	sqlPattern = fmt.Sprintf(sqlPattern, tableName)
+	_, err = db.Exec(sqlPattern, sql.Named("id", id))
+
+	return "", err
+}
+
+// отметка о выполнении задачи
+func Done(id string) (string, error) {
+	task, err := GetById(id)
+	if err != nil {
+		return "", err
+	}
+
+	if task.Repeat == "" {
+		return DeleteById(id)
+	}
+
+	now := getNowDate()
+	task.Date, err = nd.Calc(now, task.Date, task.Repeat)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = Edit(task)
+
+	return "", err
+}
+
+// получение задачи по id
 func GetById(id string) (TaskFromDB, error) {
 	task := TaskFromDB{}
 	db, err := dbCreator.GetConnection()
@@ -44,6 +81,15 @@ func GetById(id string) (TaskFromDB, error) {
 	return task, nil
 }
 
+func getNowDate() time.Time {
+	now := time.Now()
+	nowStr := now.Format(nd.DateFormat)
+	now, _ = time.Parse(nd.DateFormat, nowStr)
+
+	return now
+}
+
+// выгрузка списка задач
 func GetList() ([]TaskFromDB, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {
@@ -74,7 +120,8 @@ func GetList() ([]TaskFromDB, error) {
 	return list, nil
 }
 
-func isTAskExists(id string) bool {
+// проверка на существование задачи
+func isTaskExists(id string) bool {
 	db, err := dbCreator.GetConnection()
 	if err != nil {
 		fmt.Println(err)
@@ -99,6 +146,7 @@ func isTAskExists(id string) bool {
 	return true
 }
 
+// редактирование задачи
 func Edit(task TaskFromDB) (string, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {
@@ -120,7 +168,7 @@ func Edit(task TaskFromDB) (string, error) {
 	}
 
 	// проверяем, что задача с таким id существует
-	if !isTAskExists(task.Id) {
+	if !isTaskExists(task.Id) {
 		return "", fmt.Errorf("задачи с таким id не существует")
 	}
 
@@ -140,9 +188,7 @@ func Edit(task TaskFromDB) (string, error) {
 		return "", err
 	}
 
-	now := time.Now()
-	nowStr := now.Format(nd.DateFormat)
-	now, _ = time.Parse(nd.DateFormat, nowStr)
+	now := getNowDate()
 
 	if date.Sub(now) < 0 {
 		if task.Repeat == "" {
@@ -161,7 +207,6 @@ func Edit(task TaskFromDB) (string, error) {
 	sqlPattern = fmt.Sprintf(sqlPattern, tableName)
 	res, err := db.Exec(
 		sqlPattern,
-		sql.Named("tab", tableName),
 		sql.Named("date", task.Date),
 		sql.Named("title", task.Title),
 		sql.Named("comment", task.Comment),
@@ -180,6 +225,7 @@ func Edit(task TaskFromDB) (string, error) {
 	return strconv.Itoa(int(id)), nil
 }
 
+// добавление задачи
 func Add(task Task) (string, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {
@@ -204,9 +250,7 @@ func Add(task Task) (string, error) {
 		return "", err
 	}
 
-	now := time.Now()
-	nowStr := now.Format(nd.DateFormat)
-	now, _ = time.Parse(nd.DateFormat, nowStr)
+	now := getNowDate()
 
 	if date.Sub(now) < 0 {
 		if task.Repeat == "" {
@@ -225,7 +269,6 @@ func Add(task Task) (string, error) {
 	sqlPattern = fmt.Sprintf(sqlPattern, tableName)
 	res, err := db.Exec(
 		sqlPattern,
-		sql.Named("tab", tableName),
 		sql.Named("date", task.Date),
 		sql.Named("title", task.Title),
 		sql.Named("comment", task.Comment),

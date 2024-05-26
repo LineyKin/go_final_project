@@ -29,8 +29,6 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 
 	params, _ := url.ParseQuery(urlParsed.RawQuery)
 
-	//fmt.Println(params)
-
 	now, okNow := params["now"]
 	if !okNow {
 		http.Error(w, "нет параметра now", http.StatusBadRequest)
@@ -69,6 +67,38 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// обработчик отметки о выполнении задач
+func doneTask(w http.ResponseWriter, r *http.Request) {
+	urlStr := r.URL.String()
+	urlParsed, err := url.Parse(urlStr)
+	if err != nil {
+		panic(err)
+	}
+
+	params, _ := url.ParseQuery(urlParsed.RawQuery)
+
+	id := params["id"][0]
+
+	result, err := tsk.Done(id)
+	if err != nil {
+		errorMap := map[string]string{
+			"error": error.Error(err),
+		}
+
+		resp, _ := json.Marshal(errorMap)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(resp)
+		return
+	}
+
+	resp, _ := json.Marshal(result)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
 // обрадотчик редактирования задачи
 func editTask(w http.ResponseWriter, r *http.Request) {
 	var task tsk.TaskFromDB
@@ -92,7 +122,7 @@ func editTask(w http.ResponseWriter, r *http.Request) {
 		respMap = map[string]string{"error": error.Error(newTaskErr)}
 	}
 
-	resp, err := json.MarshalIndent(respMap, "", "    ")
+	resp, err := json.Marshal(respMap)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -119,7 +149,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 		respMap := map[string]string{
 			"error": "нет параметра id",
 		}
-		resp, _ := json.MarshalIndent(respMap, "", "    ")
+		resp, _ := json.Marshal(respMap)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write(resp)
@@ -128,12 +158,12 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 	// получаем задачу
 	task, getErr := tsk.GetById(id[0])
-	resp, err := json.MarshalIndent(task, "", "    ")
+	resp, err := json.Marshal(task)
 	if getErr != nil {
 		respMap := map[string]string{
 			"error": error.Error(getErr),
 		}
-		resp, err = json.MarshalIndent(respMap, "", "    ")
+		resp, err = json.Marshal(respMap)
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -153,14 +183,14 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 		"tasks": list,
 	}
 
-	resp, err := json.MarshalIndent(respMap, "", "    ")
+	resp, err := json.Marshal(respMap)
 
 	if listError != nil {
 		errorMap := map[string]string{
 			"error": error.Error(listError),
 		}
 
-		resp, err = json.MarshalIndent(errorMap, "", "    ")
+		resp, err = json.Marshal(errorMap)
 	}
 
 	if err != nil {
@@ -196,7 +226,7 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 		respMap = map[string]string{"error": error.Error(newTaskErr)}
 	}
 
-	resp, err := json.MarshalIndent(respMap, "", "    ")
+	resp, err := json.Marshal(respMap)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -227,6 +257,9 @@ func main() {
 
 	// ручка для редактирования задачи
 	r.Put("/api/task", editTask)
+
+	// ручка отметки о выполнении задачи
+	r.Post("/api/task/done", doneTask)
 
 	// Ручки основной страницы фронта и файлов фронта.
 	// Баг: неадекватно реагирует на ctrl + shift + R,
