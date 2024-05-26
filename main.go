@@ -67,6 +67,49 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// обработчик удаления задачи
+func deleteTask(w http.ResponseWriter, r *http.Request) {
+	urlStr := r.URL.String()
+	urlParsed, err := url.Parse(urlStr)
+	if err != nil {
+		panic(err)
+	}
+
+	params, _ := url.ParseQuery(urlParsed.RawQuery)
+
+	id, idOk := params["id"]
+	if !idOk {
+		errorMap := map[string]string{
+			"error": "отсутствует параметр id",
+		}
+
+		resp, _ := json.Marshal(errorMap)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(resp)
+		return
+	}
+
+	result, err := tsk.DeleteById(id[0])
+	if err != nil {
+		errorMap := map[string]string{
+			"error": error.Error(err),
+		}
+
+		resp, _ := json.Marshal(errorMap)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(resp)
+		return
+	}
+
+	resp, _ := json.Marshal(result)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
 // обработчик отметки о выполнении задач
 func doneTask(w http.ResponseWriter, r *http.Request) {
 	urlStr := r.URL.String()
@@ -260,6 +303,9 @@ func main() {
 
 	// ручка отметки о выполнении задачи
 	r.Post("/api/task/done", doneTask)
+
+	// ручка удаления задачи
+	r.Delete("/api/task", deleteTask)
 
 	// Ручки основной страницы фронта и файлов фронта.
 	// Баг: неадекватно реагирует на ctrl + shift + R,

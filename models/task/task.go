@@ -27,6 +27,7 @@ type TaskFromDB struct {
 
 type empty struct{}
 
+// удаление задачи по id
 func DeleteById(id string) (empty, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {
@@ -34,6 +35,20 @@ func DeleteById(id string) (empty, error) {
 		return empty{}, err
 	}
 	defer db.Close()
+
+	if !isTaskExists(id) {
+		return empty{}, fmt.Errorf("задачи с таким id не существует")
+	}
+
+	// проверяем, что id нужного формата
+	if !isCorrectId(id) {
+		return empty{}, fmt.Errorf("неверный формат id")
+	}
+
+	if id == "" {
+		return empty{}, fmt.Errorf("в запросе не указан id")
+	}
+
 	sqlPattern := "DELETE FROM %s WHERE id = :id"
 	sqlPattern = fmt.Sprintf(sqlPattern, tableName)
 	_, err = db.Exec(sqlPattern, sql.Named("id", id))
@@ -148,6 +163,13 @@ func isTaskExists(id string) bool {
 	return true
 }
 
+func isCorrectId(id string) bool {
+	idRegExp := `^\d+$`
+	matched, _ := regexp.MatchString(idRegExp, id)
+
+	return matched
+}
+
 // редактирование задачи
 func Edit(task TaskFromDB) (string, error) {
 	db, err := dbCreator.GetConnection()
@@ -163,10 +185,8 @@ func Edit(task TaskFromDB) (string, error) {
 	}
 
 	// проверяем, что id нужного формата
-	idRegExp := `^\d+$`
-	matched, _ := regexp.MatchString(idRegExp, task.Id)
-	if !matched {
-		return "", fmt.Errorf("в запросе не указан id")
+	if !isCorrectId(task.Id) {
+		return "", fmt.Errorf("неверный формат id")
 	}
 
 	// проверяем, что задача с таким id существует
