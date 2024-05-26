@@ -19,6 +19,41 @@ type Task struct {
 	Repeat  string `json:"repeat"`
 }
 
+type TaskFromDB struct {
+	Id string `json:"id"`
+	Task
+}
+
+func GetList() ([]TaskFromDB, error) {
+	db, err := dbCreator.GetConnection()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer db.Close()
+
+	sql := fmt.Sprintf("SELECT * FROM %s ORDER BY date", tableName)
+	rows, err := db.Query(sql)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+	list := []TaskFromDB{}
+	for rows.Next() {
+		task := TaskFromDB{}
+		err := rows.Scan(&task.Id, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		list = append(list, task)
+	}
+
+	return list, nil
+}
+
 func Add(task Task) (string, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {

@@ -69,6 +69,21 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// обработчик получения списка задач
+func getTasks(w http.ResponseWriter, r *http.Request) {
+	list, _ := tsk.GetList()
+
+	resp, err := json.MarshalIndent(list, "", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
 // обработчик добавления задачи
 func addTask(w http.ResponseWriter, r *http.Request) {
 	var task tsk.Task
@@ -114,6 +129,9 @@ func main() {
 
 	// ручка добавления задачи
 	r.Post("/api/task", addTask)
+
+	// ручка получения списка задач
+	r.Get("/api/tasks", getTasks)
 
 	// Ручки основной страницы фронта и файлов фронта.
 	// Баг: неадекватно реагирует на ctrl + shift + R,
