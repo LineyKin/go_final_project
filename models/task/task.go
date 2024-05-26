@@ -25,25 +25,27 @@ type TaskFromDB struct {
 	Task
 }
 
-func DeleteById(id string) (string, error) {
+type empty struct{}
+
+func DeleteById(id string) (empty, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {
 		fmt.Println(err)
-		return "", err
+		return empty{}, err
 	}
 	defer db.Close()
 	sqlPattern := "DELETE FROM %s WHERE id = :id"
 	sqlPattern = fmt.Sprintf(sqlPattern, tableName)
 	_, err = db.Exec(sqlPattern, sql.Named("id", id))
 
-	return "", err
+	return empty{}, err
 }
 
 // отметка о выполнении задачи
-func Done(id string) (string, error) {
+func Done(id string) (empty, error) {
 	task, err := GetById(id)
 	if err != nil {
-		return "", err
+		return empty{}, err
 	}
 
 	if task.Repeat == "" {
@@ -53,12 +55,12 @@ func Done(id string) (string, error) {
 	now := getNowDate()
 	task.Date, err = nd.Calc(now, task.Date, task.Repeat)
 	if err != nil {
-		return "", err
+		return empty{}, err
 	}
 
 	_, err = Edit(task)
 
-	return "", err
+	return empty{}, err
 }
 
 // получение задачи по id
