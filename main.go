@@ -69,6 +69,40 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// обрадотчик редактирования задачи
+func editTask(w http.ResponseWriter, r *http.Request) {
+	var task tsk.TaskFromDB
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	newTaskId, newTaskErr := tsk.Edit(task)
+
+	respMap := map[string]string{"id": newTaskId}
+	if newTaskErr != nil {
+		respMap = map[string]string{"error": error.Error(newTaskErr)}
+	}
+
+	resp, err := json.MarshalIndent(respMap, "", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
 // обработчик получения задачи по её id
 func getTask(w http.ResponseWriter, r *http.Request) {
 
@@ -190,6 +224,9 @@ func main() {
 
 	// ручка получения задачи по её id
 	r.Get("/api/task", getTask)
+
+	// ручка для редактирования задачи
+	r.Put("/api/task", editTask)
 
 	// Ручки основной страницы фронта и файлов фронта.
 	// Баг: неадекватно реагирует на ctrl + shift + R,
