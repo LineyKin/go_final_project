@@ -71,9 +71,22 @@ func getNextDate(w http.ResponseWriter, r *http.Request) {
 
 // обработчик получения списка задач
 func getTasks(w http.ResponseWriter, r *http.Request) {
-	list, _ := tsk.GetList()
+	list, listError := tsk.GetList()
 
-	resp, err := json.MarshalIndent(list, "", "    ")
+	respMap := map[string][]tsk.TaskFromDB{
+		"tasks": list,
+	}
+
+	resp, err := json.MarshalIndent(respMap, "", "    ")
+
+	if listError != nil {
+		errorMap := map[string]string{
+			"error": error.Error(listError),
+		}
+
+		resp, err = json.MarshalIndent(errorMap, "", "    ")
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -140,6 +153,11 @@ func main() {
 	fileServer(r, `/js/scripts.min.js`, http.Dir(webDir))
 	fileServer(r, `/css/style.css`, http.Dir(webDir))
 	fileServer(r, `/favicon.ico`, http.Dir(webDir))
+
+	//http.Handle(`/`, http.FileServer(http.Dir(webDir)))
+	//http.Handle(`/js/scripts.min.js`, http.FileServer(http.Dir(webDir)))
+	//http.Handle(`/css/style.css`, http.FileServer(http.Dir(webDir)))
+	//http.Handle(`/favicon.ico`, http.FileServer(http.Dir(webDir)))
 
 	port := p.Get() // порт из .ENV
 	fmt.Println("Запускаем сервер")
