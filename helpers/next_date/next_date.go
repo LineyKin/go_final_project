@@ -59,8 +59,6 @@ func calcDayType(now time.Time, dateStr string, repeat string) (string, error) {
 		newDate = newDate.AddDate(0, 0, days)
 	}
 
-	fmt.Println(dateStr)
-
 	return newDate.Format(DateFormat), nil
 }
 

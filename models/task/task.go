@@ -3,7 +3,11 @@ package task
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+	"time"
+
 	dbCreator "go_final_project/helpers/db_creator"
+	nd "go_final_project/helpers/next_date"
 )
 
 const tableName string = "scheduler"
@@ -15,16 +19,45 @@ type Task struct {
 	Repeat  string `json:"repeat"`
 }
 
-func Add(task Task) (int, error) {
+func Add(task Task) (string, error) {
 	db, err := dbCreator.GetConnection()
 	if err != nil {
 		fmt.Println(err)
-		return 0, err
+		return "", err
 	}
 	defer db.Close()
 
+	// заголовок задачи должен быть обязательно
 	if task.Title == "" {
-		return 0, fmt.Errorf("поле Задача не заполнено")
+		return "", fmt.Errorf("не указан заголовок задачи")
+	}
+
+	// если дата не указана - пишем сегодняшнюю
+	if task.Date == "" {
+		task.Date = time.Now().Format(nd.DateFormat)
+	}
+
+	// проверка на адекватность записи даты. Парсить должно без ошибок
+	date, err := time.Parse(nd.DateFormat, task.Date)
+	if err != nil {
+		return "", err
+	}
+
+	now := time.Now()
+	nowStr := now.Format(nd.DateFormat)
+	now, _ = time.Parse(nd.DateFormat, nowStr)
+
+	if date.Sub(now) < 0 {
+		if task.Repeat == "" {
+			task.Date = now.Format(nd.DateFormat)
+		} else {
+			fmt.Println(task.Date)
+			task.Date, err = nd.Calc(now, task.Date, task.Repeat)
+			fmt.Println(task.Date)
+			if err != nil {
+				return "", err
+			}
+		}
 	}
 
 	sqlPattern := `INSERT INTO %s (date, title, comment, repeat) VALUES(:date, :title, :comment, :repeat)`
@@ -38,13 +71,13 @@ func Add(task Task) (int, error) {
 		sql.Named("repeat", task.Repeat))
 
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
-	return int(id), nil
+	return strconv.Itoa(int(id)), nil
 }

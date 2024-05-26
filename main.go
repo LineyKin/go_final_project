@@ -86,8 +86,21 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newTaskId, newTaskErr := tsk.Add(task)
-	fmt.Println(newTaskId)
-	fmt.Println(newTaskErr)
+
+	respMap := map[string]string{"id": newTaskId}
+	if newTaskErr != nil {
+		respMap = map[string]string{"error": error.Error(newTaskErr)}
+	}
+
+	resp, err := json.MarshalIndent(respMap, "", "    ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
 }
 
 func main() {
