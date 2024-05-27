@@ -88,35 +88,27 @@ func deleteTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработчик отметки о выполнении задач
-func doneTask(w http.ResponseWriter, r *http.Request) {
-	urlStr := r.URL.String()
-	urlParsed, err := url.Parse(urlStr)
-	if err != nil {
-		panic(err)
-	}
+// go test -run ^TestDone$ ./tests - OK
+func doneTask(c *gin.Context) {
 
-	params, _ := url.ParseQuery(urlParsed.RawQuery)
-
-	id := params["id"][0]
-
-	result, err := tsk.Done(id)
-	if err != nil {
-		errorMap := map[string]string{
-			"error": error.Error(err),
-		}
-
-		resp, _ := json.Marshal(errorMap)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(resp)
+	if c.Request.Method != http.MethodPost {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Метод не поддерживается"})
 		return
 	}
 
-	resp, _ := json.Marshal(result)
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "нет параметра id"})
+		return
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	result, err := tsk.Done(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // обрадотчик редактирования задачи
@@ -223,7 +215,7 @@ func main() {
 	r.PUT("/api/task", editTask)
 
 	// ручка отметки о выполнении задачи
-	//r.Post("/api/task/done", doneTask)
+	r.POST("/api/task/done", doneTask)
 
 	// ручка удаления задачи
 	//r.Delete("/api/task", deleteTask)
