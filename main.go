@@ -155,45 +155,23 @@ func editTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработчик получения задачи по её id
-func getTask(w http.ResponseWriter, r *http.Request) {
+// go test -run ^TestTask$ ./tests - OK
+func getTask(c *gin.Context) {
 
-	urlStr := r.URL.String()
-	urlParsed, err := url.Parse(urlStr)
-	if err != nil {
-		panic(err)
-	}
-
-	params, _ := url.ParseQuery(urlParsed.RawQuery)
-
-	id, ok := params["id"]
-	if !ok {
-		respMap := map[string]string{
-			"error": "нет параметра id",
-		}
-		resp, _ := json.Marshal(respMap)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resp)
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "нет параметра id"})
 		return
 	}
 
 	// получаем задачу
-	task, getErr := tsk.GetById(id[0])
-	resp, err := json.Marshal(task)
-	if getErr != nil {
-		respMap := map[string]string{
-			"error": error.Error(getErr),
-		}
-		resp, err = json.Marshal(respMap)
-	}
+	task, err := tsk.GetById(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	c.JSON(http.StatusOK, task)
 }
 
 // обработчик получения списка задач
@@ -238,7 +216,6 @@ func main() {
 	// проверяем БД и в случае отсутствия создаём её с таблицей
 	dbCreator.Create()
 
-	//r := chi.NewRouter()
 	r := gin.Default()
 
 	// API nextdate
@@ -251,7 +228,7 @@ func main() {
 	r.GET("/api/tasks", getTasks)
 
 	// ручка получения задачи по её id
-	//r.Get("/api/task", getTask)
+	r.GET("/api/task", getTask)
 
 	// ручка для редактирования задачи
 	//r.Put("/api/task", editTask)
