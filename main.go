@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -121,43 +120,33 @@ func doneTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // обрадотчик редактирования задачи
-func editTask(w http.ResponseWriter, r *http.Request) {
+// go test -run ^TestEditTask$ ./tests - OK
+func editTask(c *gin.Context) {
+
+	if c.Request.Method != http.MethodPut {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Метод не поддерживается"})
+		return
+	}
+
 	var task tsk.TaskFromDB
-	var buf bytes.Buffer
+	if err := c.BindJSON(&task); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ошибка десериализации JSON"})
+		return
+	}
 
-	_, err := buf.ReadFrom(r.Body)
+	newTaskId, err := tsk.Edit(task)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": error.Error(err)})
 		return
 	}
 
-	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	newTaskId, newTaskErr := tsk.Edit(task)
-
-	respMap := map[string]string{"id": newTaskId}
-	if newTaskErr != nil {
-		respMap = map[string]string{"error": error.Error(newTaskErr)}
-	}
-
-	resp, err := json.Marshal(respMap)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	c.JSON(http.StatusOK, gin.H{"id": newTaskId})
 }
 
 // обработчик получения задачи по её id
 // go test -run ^TestTask$ ./tests - OK
 func getTask(c *gin.Context) {
-
 	id := c.Query("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "нет параметра id"})
@@ -205,7 +194,7 @@ func addTask(c *gin.Context) {
 	newTaskId, err := tsk.Add(task)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении идентификатора задачи"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": error.Error(err)})
 		return
 	}
 
@@ -231,7 +220,7 @@ func main() {
 	r.GET("/api/task", getTask)
 
 	// ручка для редактирования задачи
-	//r.Put("/api/task", editTask)
+	r.PUT("/api/task", editTask)
 
 	// ручка отметки о выполнении задачи
 	//r.Post("/api/task/done", doneTask)
