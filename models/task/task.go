@@ -12,6 +12,7 @@ import (
 )
 
 const tableName string = "scheduler"
+const searchDateFormat string = "02.01.2006"
 
 type Task struct {
 	Date    string `json:"date"`
@@ -104,6 +105,56 @@ func getNowDate() time.Time {
 	now, _ = time.Parse(nd.DateFormat, nowStr)
 
 	return now
+}
+
+func GetListBySearch(search string) ([]TaskFromDB, error) {
+	db, err := dbCreator.GetConnection()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer db.Close()
+
+	searchDateRegExp := `^\d{2}\.\d{2}\.\d{4}$`
+	matched, err := regexp.MatchString(searchDateRegExp, search)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(matched)
+	if matched {
+		searchDate, err := time.Parse(searchDateFormat, search)
+		if err != nil {
+			return nil, err
+		}
+
+		search = searchDate.Format(nd.DateFormat)
+	}
+
+	sqlPattern := `SELECT * FROM %1s 
+	WHERE title LIKE '%%%s%%' 
+	OR title LIKE '%%%s%%'
+	OR date = '%s'
+	ORDER BY date`
+	sql := fmt.Sprintf(sqlPattern, tableName, search, search, search)
+	rows, err := db.Query(sql)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer rows.Close()
+	list := []TaskFromDB{}
+	for rows.Next() {
+		task := TaskFromDB{}
+		err := rows.Scan(&task.Id, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+
+		list = append(list, task)
+	}
+
+	return list, nil
 }
 
 // выгрузка списка задач

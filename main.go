@@ -135,7 +135,15 @@ func getTask(c *gin.Context) {
 // обработчик получения списка задач
 // go test -run ^TestTasks$ ./tests - OK
 func getTasks(c *gin.Context) {
-	list, err := tsk.GetList()
+	search := c.Query("search")
+
+	var list []tsk.TaskFromDB
+	var err error
+	if search == "" {
+		list, err = tsk.GetList()
+	} else {
+		list, err = tsk.GetListBySearch(search)
+	}
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -203,7 +211,7 @@ func main() {
 	r.Static("/css", "./web/css")
 	r.StaticFile("/favicon.ico", "./web/favicon.ico")
 	r.StaticFile("/index.html", "./web/index.html")
-	r.StaticFile("/login.html", "./web/login.html")
+	r.StaticFile("/login.html", "./web/index.html")
 
 	r.GET("/", fileServerHandler)
 
