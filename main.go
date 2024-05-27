@@ -197,31 +197,17 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // обработчик получения списка задач
-func getTasks(w http.ResponseWriter, r *http.Request) {
-	list, listError := tsk.GetList()
-
-	respMap := map[string][]tsk.TaskFromDB{
-		"tasks": list,
-	}
-
-	resp, err := json.Marshal(respMap)
-
-	if listError != nil {
-		errorMap := map[string]string{
-			"error": error.Error(listError),
-		}
-
-		resp, err = json.Marshal(errorMap)
-	}
+// go test -run ^TestTasks$ ./tests - OK
+func getTasks(c *gin.Context) {
+	list, err := tsk.GetList()
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusOK, list)
+	//c.String(http.StatusOK, nextDate)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
 }
 
 // обработчик добавления задачи
@@ -272,7 +258,7 @@ func main() {
 	//r.Post("/api/task", addTask)
 
 	// ручка получения списка задач
-	//r.Get("/api/tasks", getTasks)
+	r.GET("/api/tasks", getTasks)
 
 	// ручка получения задачи по её id
 	//r.Get("/api/task", getTask)
