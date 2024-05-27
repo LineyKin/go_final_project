@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,56 +15,34 @@ import (
 	p "go_final_project/helpers/port"
 	tsk "go_final_project/models/task"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
 
 const webDir = "web"
 
-func getNextDate(w http.ResponseWriter, r *http.Request) {
-	urlStr := r.URL.String()
-	urlParsed, err := url.Parse(urlStr)
-	if err != nil {
-		panic(err)
+// go test -run ^TestNextDate$ ./tests - OK
+func getNextDate(c *gin.Context) {
+	now := c.Query("now")
+	if now == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "нет параметра now"})
 	}
 
-	params, _ := url.ParseQuery(urlParsed.RawQuery)
-
-	now, okNow := params["now"]
-	if !okNow {
-		http.Error(w, "нет параметра now", http.StatusBadRequest)
+	date := c.Query("date")
+	if date == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "нет параметра date"})
 	}
 
-	date, okDate := params["date"]
-	if !okDate {
-		http.Error(w, "нет параметра date", http.StatusBadRequest)
-	}
+	repeat := c.Query("repeat")
 
-	repeat, okRepeat := params["repeat"]
-	if !okRepeat {
-		http.Error(w, "нет параметра repeat", http.StatusBadRequest)
-	}
-
-	nextDate := ""
-	if okNow && okDate && okRepeat {
-		nowTime, _ := time.Parse(nd.DateFormat, now[0])
-		nextDate, err = nd.Calc(nowTime, date[0], repeat[0])
-	}
+	nowTime, _ := time.Parse(nd.DateFormat, now)
+	nextDate, err := nd.Calc(nowTime, date, repeat)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	nextDateInt, _ := strconv.Atoi(nextDate)
-	resp, err := json.Marshal(nextDateInt)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	c.String(http.StatusOK, nextDate)
 }
 
 // обработчик удаления задачи
@@ -286,74 +262,59 @@ func main() {
 	// проверяем БД и в случае отсутствия создаём её с таблицей
 	dbCreator.Create()
 
-	r := chi.NewRouter()
+	//r := chi.NewRouter()
+	r := gin.Default()
 
 	// API nextdate
-	r.Get("/api/nextdate", getNextDate)
+	r.GET("/api/nextdate", getNextDate)
 
 	// ручка добавления задачи
-	r.Post("/api/task", addTask)
+	//r.Post("/api/task", addTask)
 
 	// ручка получения списка задач
-	r.Get("/api/tasks", getTasks)
+	//r.Get("/api/tasks", getTasks)
 
 	// ручка получения задачи по её id
-	r.Get("/api/task", getTask)
+	//r.Get("/api/task", getTask)
 
 	// ручка для редактирования задачи
-	r.Put("/api/task", editTask)
+	//r.Put("/api/task", editTask)
 
 	// ручка отметки о выполнении задачи
-	r.Post("/api/task/done", doneTask)
+	//r.Post("/api/task/done", doneTask)
 
 	// ручка удаления задачи
-	r.Delete("/api/task", deleteTask)
+	//r.Delete("/api/task", deleteTask)
 
-	// Ручки основной страницы фронта и файлов фронта.
-	// Баг: неадекватно реагирует на ctrl + shift + R,
-	// но если не нажимать так, то всё ок
 	// go test -run ^TestApp$ ./tests
 	// go test ./tests
-	workDir, _ := os.Getwd()
-	filesDir := http.Dir(filepath.Join(workDir, webDir))
-	fileServer(r, `/`, http.Dir(filesDir))
-	fileServer(r, `/js/scripts.min.js`, http.Dir(filesDir))
-	fileServer(r, `/css/style.css`, http.Dir(filesDir))
-	fileServer(r, `/favicon.ico`, http.Dir(filesDir))
 	//http.Handle(`/`, http.FileServer(http.Dir(webDir)))
 	//http.Handle(`/js/scripts.min.js`, http.FileServer(http.Dir(webDir)))
 	//http.Handle(`/css/style.css`, http.FileServer(http.Dir(webDir)))
 	//http.Handle(`/favicon.ico`, http.FileServer(http.Dir(webDir)))
 
+	r.Static("/js", "./web/js")
+	r.Static("/css", "./web/css")
+	r.StaticFile("/favicon.ico", "./web/favicon.ico")
+
+	r.GET("/", fileServerHandler)
+
 	port := p.Get() // порт из .ENV
 	fmt.Println("Запускаем сервер")
 	fmt.Printf("http://localhost:%s/", port)
-	err := http.ListenAndServe(":"+port, r)
+	err := r.Run(":" + port)
 	if err != nil {
-		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
-		return
+		fmt.Printf("Failed to start server: %v", err)
 	}
+	//err := http.ListenAndServe(":"+port, nil)
+	//if err != nil {
+	//	fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
+	//	return
+	//}
 }
 
-// файл сервер на chi
-// найдено в интернете:
-// https://github.com/go-chi/chi/blob/master/_examples/fileserver/main.go
-func fileServer(r chi.Router, path string, root http.FileSystem) {
-	if strings.ContainsAny(path, "{}*") {
-		panic("FileServer does not permit any URL parameters.")
-	}
-
-	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", http.StatusMovedPermanently).ServeHTTP)
-		path += "/"
-	}
-	path += "*"
-
-	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
-		//fmt.Println(path)
-		rctx := chi.RouteContext(r.Context())
-		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
-		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
-		fs.ServeHTTP(w, r)
-	})
+func fileServerHandler(c *gin.Context) {
+	//webDir := config.WebDir()
+	filePath := filepath.Join(webDir, strings.TrimPrefix(c.Request.URL.Path, "/"))
+	c.File(filePath)
 }
