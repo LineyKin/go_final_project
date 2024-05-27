@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -310,11 +312,14 @@ func main() {
 	// Ручки основной страницы фронта и файлов фронта.
 	// Баг: неадекватно реагирует на ctrl + shift + R,
 	// но если не нажимать так, то всё ок
-	fileServer(r, `/`, http.Dir(webDir))
-	fileServer(r, `/js/scripts.min.js`, http.Dir(webDir))
-	fileServer(r, `/css/style.css`, http.Dir(webDir))
-	fileServer(r, `/favicon.ico`, http.Dir(webDir))
-
+	// go test -run ^TestApp$ ./tests
+	// go test ./tests
+	workDir, _ := os.Getwd()
+	filesDir := http.Dir(filepath.Join(workDir, webDir))
+	fileServer(r, `/`, http.Dir(filesDir))
+	fileServer(r, `/js/scripts.min.js`, http.Dir(filesDir))
+	fileServer(r, `/css/style.css`, http.Dir(filesDir))
+	fileServer(r, `/favicon.ico`, http.Dir(filesDir))
 	//http.Handle(`/`, http.FileServer(http.Dir(webDir)))
 	//http.Handle(`/js/scripts.min.js`, http.FileServer(http.Dir(webDir)))
 	//http.Handle(`/css/style.css`, http.FileServer(http.Dir(webDir)))
@@ -345,7 +350,7 @@ func fileServer(r chi.Router, path string, root http.FileSystem) {
 	path += "*"
 
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(path)
+		//fmt.Println(path)
 		rctx := chi.RouteContext(r.Context())
 		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
 		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
