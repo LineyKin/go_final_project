@@ -205,43 +205,33 @@ func getTasks(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, list)
-	//c.String(http.StatusOK, nextDate)
 
+	c.JSON(http.StatusOK, gin.H{"tasks": list})
 }
 
 // обработчик добавления задачи
-func addTask(w http.ResponseWriter, r *http.Request) {
+// go test -run ^TestAddTask$ ./tests
+func addTask(c *gin.Context) {
+
+	if c.Request.Method != http.MethodPost {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Метод не поддерживается"})
+		return
+	}
+
 	var task tsk.Task
-	var buf bytes.Buffer
+	if err := c.BindJSON(&task); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Ошибка десериализации JSON"})
+		return
+	}
 
-	_, err := buf.ReadFrom(r.Body)
+	newTaskId, err := tsk.Add(task)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при получении идентификатора задачи"})
 		return
 	}
 
-	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	newTaskId, newTaskErr := tsk.Add(task)
-
-	respMap := map[string]string{"id": newTaskId}
-	if newTaskErr != nil {
-		respMap = map[string]string{"error": error.Error(newTaskErr)}
-	}
-
-	resp, err := json.Marshal(respMap)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	c.JSON(http.StatusOK, gin.H{"id": newTaskId})
 }
 
 func main() {
@@ -255,7 +245,7 @@ func main() {
 	r.GET("/api/nextdate", getNextDate)
 
 	// ручка добавления задачи
-	//r.Post("/api/task", addTask)
+	r.POST("/api/task", addTask)
 
 	// ручка получения списка задач
 	r.GET("/api/tasks", getTasks)
