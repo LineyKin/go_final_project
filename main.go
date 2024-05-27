@@ -197,7 +197,7 @@ func main() {
 	// ручка удаления задачи
 	r.DELETE("/api/task", deleteTask)
 
-	// go test -run ^TestApp$ ./tests - NOT OK
+	// go test -count=1 -run ^TestApp$ ./tests - NOT OK
 	// go test ./tests - NOT OK
 	r.Static("/js", "./web/js")
 	r.Static("/css", "./web/css")
