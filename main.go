@@ -202,6 +202,8 @@ func main() {
 	r.Static("/js", "./web/js")
 	r.Static("/css", "./web/css")
 	r.StaticFile("/favicon.ico", "./web/favicon.ico")
+	r.StaticFile("/index.html", "./web/index.html")
+	r.StaticFile("/login.html", "./web/login.html")
 
 	r.GET("/", fileServerHandler)
 
