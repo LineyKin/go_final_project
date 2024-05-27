@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -45,46 +43,25 @@ func getNextDate(c *gin.Context) {
 }
 
 // обработчик удаления задачи
-func deleteTask(w http.ResponseWriter, r *http.Request) {
-	urlStr := r.URL.String()
-	urlParsed, err := url.Parse(urlStr)
-	if err != nil {
-		panic(err)
-	}
-
-	params, _ := url.ParseQuery(urlParsed.RawQuery)
-
-	id, idOk := params["id"]
-	if !idOk {
-		errorMap := map[string]string{
-			"error": "отсутствует параметр id",
-		}
-
-		resp, _ := json.Marshal(errorMap)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resp)
+func deleteTask(c *gin.Context) {
+	if c.Request.Method != http.MethodDelete {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "Метод не поддерживается"})
 		return
 	}
 
-	result, err := tsk.DeleteById(id[0])
-	if err != nil {
-		errorMap := map[string]string{
-			"error": error.Error(err),
-		}
-
-		resp, _ := json.Marshal(errorMap)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(resp)
+	id := c.Query("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "нет параметра id"})
 		return
 	}
 
-	resp, _ := json.Marshal(result)
+	result, err := tsk.DeleteById(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	c.JSON(http.StatusOK, result)
 }
 
 // обработчик отметки о выполнении задач
@@ -218,15 +195,10 @@ func main() {
 	r.POST("/api/task/done", doneTask)
 
 	// ручка удаления задачи
-	//r.Delete("/api/task", deleteTask)
+	r.DELETE("/api/task", deleteTask)
 
-	// go test -run ^TestApp$ ./tests
-	// go test ./tests
-	//http.Handle(`/`, http.FileServer(http.Dir(webDir)))
-	//http.Handle(`/js/scripts.min.js`, http.FileServer(http.Dir(webDir)))
-	//http.Handle(`/css/style.css`, http.FileServer(http.Dir(webDir)))
-	//http.Handle(`/favicon.ico`, http.FileServer(http.Dir(webDir)))
-
+	// go test -run ^TestApp$ ./tests - NOT OK
+	// go test ./tests - NOT OK
 	r.Static("/js", "./web/js")
 	r.Static("/css", "./web/css")
 	r.StaticFile("/favicon.ico", "./web/favicon.ico")
@@ -240,11 +212,6 @@ func main() {
 	if err != nil {
 		fmt.Printf("Failed to start server: %v", err)
 	}
-	//err := http.ListenAndServe(":"+port, nil)
-	//if err != nil {
-	//	fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
-	//	return
-	//}
 }
 
 func fileServerHandler(c *gin.Context) {
