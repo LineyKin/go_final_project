@@ -120,7 +120,7 @@ func GetListBySearch(search string) ([]TaskFromDB, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(matched)
+
 	if matched {
 		searchDate, err := time.Parse(searchDateFormat, search)
 		if err != nil {
