@@ -7,8 +7,7 @@ import (
 	hand_nd "go_final_project/handlers/next_date"
 	hand_tsk "go_final_project/handlers/task"
 	dbCreator "go_final_project/helpers/db_creator"
-
-	"go_final_project/helpers/port"
+	"go_final_project/helpers/env"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,7 +49,7 @@ func main() {
 
 	r.GET("/", hand_fs.FileServerHandler)
 
-	port := port.Get() // порт из .ENV
+	port := env.GetPort() // порт из .ENV
 	fmt.Println("Запускаем сервер")
 	fmt.Printf("http://localhost:%s/", port)
 	err := r.Run(":" + port)

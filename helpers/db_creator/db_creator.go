@@ -14,7 +14,7 @@ const env_key string = "TODO_DBFILE"
 const driverName string = "sqlite"
 
 func getDbPath() string {
-	dbFileName := env.GetByKey(env_key)
+	dbFileName := env.GetDbName()
 
 	return "./" + dbFileName
 }
